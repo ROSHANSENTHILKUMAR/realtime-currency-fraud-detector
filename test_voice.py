@@ -15,7 +15,7 @@ audio_generator = client.tts.bytes(
     },
 )
 
-# Generator-லேருந்து வர்ற chunks-ஐ join பண்ணி, ஒரே bytes object ஆக்குறோம்
+
 audio_data = b"".join(audio_generator)
 
 with open("output.wav", "wb") as f:
