@@ -1,3 +1,10 @@
 .env
 output.wav
 __pycache__/
+.env
+output.wav
+__pycache__/
+model/dataset/
+model/split_dataset/
+model/venv/
+model/edge_cases/
