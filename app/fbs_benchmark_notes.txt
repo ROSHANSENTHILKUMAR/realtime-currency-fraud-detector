@@ -1,0 +1,8 @@
+FPS Benchmark - Currency Authentication App
+=============================================
+Hardware: CPU-only (laptop webcam, no GPU)
+Model: MobileNetV2-based CNN, TFLite quantized (2.68 MB)
+Average FPS: 3.7
+Test Result: 99.7-99.8% confidence on real note detection
+Notes: Real-time inference achieved successfully on standard laptop hardware.
+FPS is CPU-limited; GPU deployment would significantly improve frame rate (15-30+ FPS expected).

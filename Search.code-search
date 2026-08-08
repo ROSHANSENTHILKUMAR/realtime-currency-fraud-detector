@@ -1,0 +1,8 @@
+# Query: 
+# ContextLines: 1
+
+model/
+  ├── venv/
+  ├── dataset/
+  │     ├── genuine/
+  │     └── fake/
