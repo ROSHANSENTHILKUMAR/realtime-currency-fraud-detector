@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'audio'))
+from test_voice import announce_result
 import streamlit as st
 import cv2
 import numpy as np
@@ -21,14 +25,19 @@ interpreter = load_model()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
+if "last_announced" not in st.session_state:
+    st.session_state.last_announced = 0
+
 IMG_SIZE = (224, 224)
+
 
 def preprocess_image(frame):
     img = cv2.resize(frame, IMG_SIZE)
     img = img.astype(np.float32)
-    img = (img / 127.5) - 1.0   # same preprocessing as MobileNetV2 training
+    img = img / 255.0  # same preprocessing as MobileNetV2 training
     img = np.expand_dims(img, axis=0)
     return img
+
 
 def predict(frame):
     input_data = preprocess_image(frame)
@@ -38,7 +47,8 @@ def predict(frame):
     prob = output[0][0]
     label = "GENUINE ✅" if prob > 0.5 else "FAKE ⚠️"
     confidence = prob if prob > 0.5 else 1 - prob
-    return label, confidence
+    return label, confidence, prob
+
 
 # ---- Sidebar controls ----
 st.sidebar.header("Controls")
@@ -46,20 +56,29 @@ run_camera = st.sidebar.checkbox("Start Camera", value=False)
 FRAME_WINDOW = st.image([])
 result_placeholder = st.empty()
 fps_placeholder = st.sidebar.empty()
+audio_placeholder = st.empty()
 
 # ---- Camera loop ----
 if run_camera:
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(0)  # default backend, no CAP_DSHOW
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+    # Warm-up: skip the first few frames, some webcams need this
+    for _ in range(5):
+        cap.read()
+        time.sleep(0.1)
+
     prev_time = time.time()
 
     while run_camera:
         ret, frame = cap.read()
-        if not ret:
+        if not ret or frame is None:
             st.error("Camera not accessible. Check webcam connection.")
             break
 
         # Predict
-        label, confidence = predict(frame)
+        label, confidence, prob = predict(frame)
 
         # FPS calculation
         curr_time = time.time()
@@ -71,6 +90,17 @@ if run_camera:
         FRAME_WINDOW.image(frame_rgb)
         result_placeholder.markdown(f"### Result: {label}  \nConfidence: {confidence*100:.1f}%")
         fps_placeholder.text(f"FPS: {fps:.1f}")
+
+        if curr_time - st.session_state.last_announced > 3:
+            status = "genuine" if prob > 0.5 else "fake"
+            try:
+                announce_result(status, round(confidence * 100, 1))
+                st.session_state.last_announced = curr_time
+                audio_path = os.path.join(os.path.dirname(__file__), '..', 'audio', 'output.wav')
+                with audio_placeholder:
+                    st.audio(audio_path, autoplay=True)
+            except Exception as e:
+                st.error(f"Voice generation failed: {e}")
 
         # Streamlit re-run check (stop if checkbox unticked)
         run_camera = st.session_state.get("Start Camera", run_camera)

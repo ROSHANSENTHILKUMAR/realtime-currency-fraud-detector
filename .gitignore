@@ -8,3 +8,4 @@ model/dataset/
 model/split_dataset/
 model/venv/
 model/edge_cases/
+app/venv/

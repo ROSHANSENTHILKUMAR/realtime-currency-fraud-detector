@@ -5,9 +5,8 @@ import os
 load_dotenv()
 client = Cartesia(api_key=os.getenv("CARTESIA_API_KEY"))
 
-def announce_result(denomination, status, confidence):
-    text = f"This is a {denomination} rupee note, {status}, {confidence} percent confidence."
-    
+def announce_result(status, confidence):
+    text = f"This note is {status}, {confidence} percent confidence."
     audio_generator = client.tts.bytes(
         model_id="sonic-2",
         transcript=text,
@@ -18,13 +17,10 @@ def announce_result(denomination, status, confidence):
             "sample_rate": 44100,
         },
     )
-    
+
     audio_data = b"".join(audio_generator)
-    
+
     with open("output.wav", "wb") as f:
         f.write(audio_data)
-    
-    print(f"Audio generated: {denomination} rupees, {status}, {confidence}% confidence")
 
-# Test different values
-announce_result(500, "genuine", 94)
+    print(f"Audio generated: {status}, {confidence}% confidence")
